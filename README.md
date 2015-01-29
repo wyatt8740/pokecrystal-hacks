@@ -16,3 +16,10 @@ To set up the repository, see [**INSTALL.md**](INSTALL.md).
 
 [pokered]: https://github.com/iimarckus/pokered
 [irc]: https://kiwiirc.com/client/irc.freenode.net/?#pret
+
+
+Wyatt's hacks:
+
+* Removed password prompt for clock reset, changed key combination back to down-select-B on title screen.
+* added back the Color Test debug menus. Pokemon debug menu is left-select-B, Trainer debug is right-select-B on title screen.
+* Added a way for cheaters to mess with stuff in game (change 'DEBUG_MODE' in 'constants.asm' to 1)

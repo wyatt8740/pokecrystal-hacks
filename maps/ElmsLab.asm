@@ -1,3 +1,4 @@
+;INCLUDE "../constants.asm"
 ElmsLab_MapScriptHeader: ; 0x78b5d
 	; trigger count
 	db 6
@@ -169,8 +170,10 @@ LabTryToLeaveScript: ; 0x78c65
 ; 0x78c73
 
 CyndaquilPokeBallScript: ; 0x78c73
-	checkevent EVENT_GOT_A_POKEMON_FROM_ELM
-	iftrue LookAtElmPokeBallScript
+	IF !DEBUG_MODE
+		checkevent EVENT_GOT_A_POKEMON_FROM_ELM
+		iftrue LookAtElmPokeBallScript
+	ENDC
 	spriteface $2, $0
 	refreshscreen $0
 	pokepic CYNDAQUIL

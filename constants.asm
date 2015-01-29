@@ -1,3 +1,6 @@
+;Cheat game - get all starter pokemon, various other things.
+;Okay, I admit it. This is mostly for dirty cheaters.
+DEBUG_MODE equ 1
 
 INCLUDE "macros.asm"
 

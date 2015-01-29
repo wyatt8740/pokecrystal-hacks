@@ -1,5 +1,5 @@
 INCLUDE "includes.asm"
-
+;INCLUDE "constants.asm"
 
 SECTION "bank1", ROMX, BANK[$1]
 
@@ -4799,10 +4799,10 @@ Function6219: ; 6219
 
 .data_626a
 	dw Function5ae8
-	dw Function6389
+	dw Function6389 ;not sure why this is here but it relates to resetting save data and is apparently a word. -wyatt
 	dw Function620b
 	dw Function620b
-	dw Function6392
+	dw Function6392 ; this actually makes the 'password ok', i think
 ; 6274
 
 
@@ -4931,6 +4931,7 @@ TitleScreenTimer: ; 62f6
 
 TitleScreenMain: ; 6304
 
+
 ; Run the timer down.
 	ld hl, $cf65
 	ld e, [hl]
@@ -4945,6 +4946,8 @@ TitleScreenMain: ; 6304
 	dec hl
 	ld [hl], e
 
+
+
 ; Save data can be deleted by pressing Up + B + Select.
 	call GetJoypad
 	ld hl, hJoyDown
@@ -4957,31 +4960,41 @@ TitleScreenMain: ; 6304
 
 ; Hold Down + B + Select to initiate the sequence.
 	ld a, [$ffeb]
-	cp $34
-	jr z, .check_clock_reset
+;removed the overly complex 'clock reset', replaced with the far simpler one from gold/silver
 
 	ld a, [hl]
 	and D_DOWN + B_BUTTON + SELECT
 	cp  D_DOWN + B_BUTTON + SELECT
+	jr z,.clock_reset ;(this just hitches onto the down-b-select checking thing that was already here. Nothing of value was lost by simplifying this.)
+;	jr nz, .check_start
+
+
+;Wyatt - debug menu thing, I guess. Because debug.
+        call GetJoypad
+        ld hl, hJoyDown
+        ld a, [hl]
+        and D_RIGHT + B_BUTTON + SELECT
+        cp  D_RIGHT + B_BUTTON + SELECT
+	jr z, .gotocolortest
+
+        call GetJoypad
+        ld hl, hJoyDown
+        ld a, [hl]
+        and D_LEFT + B_BUTTON + SELECT
+        cp  D_LEFT + B_BUTTON + SELECT
+        jr z, .gotopokecolortest
+
 	jr nz, .check_start
 
-	ld a, $34
-	ld [$ffeb], a
+
+
+;farcall ColorTest ; yaaay color test
+;        jp Init ; go back to start, easiest way
+        ld a, $34
+        ld [$ffeb], a
+
 	jr .check_start
 
-; Keep Select pressed, and hold Left + Up.
-; Then let go of Select.
-.check_clock_reset
-	bit 2, [hl] ; SELECT
-	jr nz, .check_start
-
-	xor a
-	ld [$ffeb], a
-
-	ld a, [hl]
-	and D_LEFT + D_UP
-	cp  D_LEFT + D_UP
-	jr z, .clock_reset
 
 ; Press Start or A to start the game.
 .check_start
@@ -4989,6 +5002,18 @@ TitleScreenMain: ; 6304
 	and START | A_BUTTON
 	jr nz, .continue
 	ret
+
+.gotocolortest
+	ld a, BANK(ColorTest) ; get the bank of ColorTest
+        ld hl, ColorTest ; put ColorTest in hl, prepare to call
+        rst FarCall ; CALL
+	ret
+
+.gotopokecolortest
+	ld a, BANK(PokeColorTest)
+	ld hl, PokeColorTest
+	rst FarCall
+	ret ;unnecessary perhaps
 
 .continue
 	ld a, 0
@@ -5050,9 +5075,9 @@ TitleScreenEnd: ; 6375
 	set 7, [hl]
 	ret
 ; 6389
-
+;wyatt
 Function6389: ; 6389
-	callba Function4d54c
+	callba Function4d54c ;ask about save data clearing, and soft reset when done or cancelled
 	jp Init
 ; 6392
 
@@ -49117,7 +49142,7 @@ Function4880e: ; 4880e (12:480e)
 	and D_LEFT
 	jr nz, .asm_4884f
 	ld a, [hl]
-	and D_RIGHT
+	and D_RIGHT ;remember wyatt
 	jr nz, .asm_4885f
 	call DelayFrame
 	and a
@@ -54666,32 +54691,33 @@ Function4d3ab: ; 4d3ab
 ; 4d3b1
 
 Function4d3b1: ; 4d3b1
-	callba Function8000
-	ld b, $8
-	call GetSGBLayout
-	call Functione51
-	call Functione5f
-	ld de, MUSIC_MAIN_MENU
-	call PlayMusic
-	ld hl, UnknownText_0x4d408
-	call PrintText
-	ld hl, MenuDataHeader_0x4d40d
-	call Function1d3c
-	call Function1d81
-	ret c
-	ld a, [$cfa9]
-	cp $1
-	ret z
-	call Function4d41e
-	jr c, .asm_4d3f7
-	ld a, $0
-	call GetSRAMBank
-	ld a, $80
-	ld [$ac60], a
-	call CloseSRAM
-	ld hl, UnknownText_0x4d3fe
-	call PrintText
-	ret
+        callba Function8000
+        ld b, $8
+        call GetSGBLayout
+        call Functione51
+        call Functione5f
+        ld de, MUSIC_MAIN_MENU
+        call PlayMusic
+        ld hl, UnknownText_0x4d408
+        call PrintText
+        ld hl, MenuDataHeader_0x4d40d
+        call Function1d3c
+        call Function1d81
+        ret c
+        ld a, [$cfa9]
+        cp $1
+        ret z
+	;jp Init ;wyatt added
+        ;call Function4d41e ;causes infinite loop how I have it set up
+        jr c, .asm_4d3f7
+        ld a, $0
+        call GetSRAMBank
+        ld a, $80
+        ld [$ac60], a
+        call CloseSRAM
+        ld hl, UnknownText_0x4d3fe ;password ok
+        call PrintText
+        ret
 
 .asm_4d3f7
 	ld hl, UnknownText_0x4d403
@@ -54716,7 +54742,7 @@ UnknownText_0x4d408: ; 0x4d408
 	text_jump UnknownText_0x1c561c
 	db "@"
 ; 0x4d40d
-
+;yes/no prompt for time reset
 MenuDataHeader_0x4d40d: ; 0x4d40d
 	db $00 ; flags
 	db 07, 14 ; start coords
@@ -54732,32 +54758,36 @@ MenuData2_0x4d415: ; 0x4d415
 	db "YES@"
 ; 0x4d41e
 
-Function4d41e: ; 4d41e
-	call Function4d50f
-	push de
-	ld hl, StringBuffer2
-	ld bc, $0005
-	xor a
-	call ByteFill
-	ld a, $4
-	ld [$d08b], a
-	ld hl, UnknownText_0x4d463
-	call PrintText
+Function4d41e: ; 4d41e ; enter password
+call Function4d3b1
+;jp Init
+ret
+;	call Function4d50f
+;	push de
+;	ld hl, StringBuffer2
+;	ld bc, $0005
+;	xor a
+;	call ByteFill
+;	ld a, $4
+;	ld [$d08b], a
+;	ld hl, UnknownText_0x4d463
+;	call PrintText
 .asm_4d437
-	call Function4d468
+;	call Function4d468
 .asm_4d43a
-	call Functiona57
-	ld a, [$ffa9]
-	ld b, a
-	and $1
-	jr nz, .asm_4d453
-	ld a, b
-	and $f0
-	jr z, .asm_4d43a
-	call Function4d490
-	ld c, $3
-	call DelayFrames
-	jr .asm_4d437
+;	call Functiona57
+;	ld a, [$ffa9]
+;	ld b, a
+;	and $1
+;	jr nz, .asm_4d453
+;	jr .asm_4d453
+;	ld a, b
+;	and $f0
+;	jr z, .asm_4d43a
+;	call Function4d490
+;	ld c, $3
+;	call DelayFrames
+;	jr .asm_4d437
 
 .asm_4d453
 	call Function4d4e0
@@ -54782,7 +54812,7 @@ UnknownText_0x4d463: ; 0x4d463
 	db "@"
 ; 0x4d468
 
-Function4d468: ; 4d468
+Function4d468: ; 4d468 ;clock reset?
 	hlcoord 14, 15
 	ld de, StringBuffer2
 	ld c, $5
@@ -54943,7 +54973,7 @@ Function4d53e: ; 4d53e
 	ret
 ; 4d54c
 
-Function4d54c: ; 4d54c
+Function4d54c: ; 4d54c ;clear title screen, set the 'menu' music, and prompt for screen clear.
 	callba Function8000
 	ld b, $8
 	call GetSGBLayout
@@ -54951,9 +54981,10 @@ Function4d54c: ; 4d54c
 	call Functione5f
 	ld de, MUSIC_MAIN_MENU
 	call PlayMusic
-	ld hl, UnknownText_0x4d580
-	call PrintText
-	ld hl, MenuDataHeader_0x4d585
+	ld hl, UnknownText_0x4d580 ;load text for 'clear all save data?'
+	call PrintText ;print the above text
+	ld hl, MenuDataHeader_0x4d585 ;
+
 	call Function1d3c
 	call Function1d81
 	ret c
@@ -54964,13 +54995,13 @@ Function4d54c: ; 4d54c
 	ret
 ; 4d580
 
-UnknownText_0x4d580: ; 0x4d580
+UnknownText_0x4d580: ; 0x4d580 ;clear save data prompt, I think
 	; Clear all save data?
-	text_jump UnknownText_0x1c564a
+	text_jump UnknownText_0x1c564a ;bookmark1
 	db "@"
 ; 0x4d585
-
-MenuDataHeader_0x4d585: ; 0x4d585
+;wyatt
+MenuDataHeader_0x4d585: ; 0x4d585 ;Prompt for save data clear (y/n), set default option to 'no'
 	db $00 ; flags
 	db 07, 14 ; start coords
 	db 11, 19 ; end coords
@@ -60479,20 +60510,23 @@ GetBackpic: ; 5116c
 	ret
 ; 511c5
 
-
 FixPicBank: ; 511c5
 ; This is a thing for some reason.
-	push hl
-	push bc
-	sub PICS_1 - $36
-	ld c, a
-	ld b, 0
-	ld hl, Unknown_511d4
-	add hl, bc
-	ld a, [hl]
-	pop bc
-	pop hl
-	ret
+;       push hl
+;       push bc
+;       sub PICS_1 - $36
+        add $36
+        ret
+;WYATT COMMENT OUT
+;       ld c, a
+;       ld b, 0
+;       ld hl, Unknown_511d4
+;       add hl, bc
+;       ld a, [hl]
+;       pop bc
+;       pop hl
+;       ret
+;END OF WYATT COMMENT OUT
 ; 511d4
 
 Unknown_511d4: ; 511d4
@@ -61982,8 +62016,11 @@ Function80728: ; 80728
 BattleText::
 INCLUDE "text/battle.asm"
 
-
+PokeColorTest: ;Wyatt added as a hackish solution
+	ld a, 0
+	ld [DefaultFlypoint], a
 ColorTest: ; 818ac
+
 ; A debug menu to test monster and trainer palettes at runtime.
 
 	ld a, [hCGB]
@@ -62002,7 +62039,7 @@ ColorTest: ; 818ac
 	call Function81948
 	call Function8197c
 	call Function819a7
-	call Function818f4
+	call Function818f4 ;Chooses pokemon mode or trainer mode?
 	call EnableLCD
 	ld de, MUSIC_NONE
 	call PlayMusic
@@ -62026,7 +62063,7 @@ ColorTest: ; 818ac
 ; 818f4
 
 Function818f4: ; 818f4
-	ld a, [DefaultFlypoint]
+	ld a, [DefaultFlypoint];trainer?
 	and a
 	jr nz, Function81911
 	ld hl, PokemonPalettes
@@ -62321,6 +62358,7 @@ Function81a74: ; 81a74
 
 Function81ac3: ; 81ac3
 ; Looping back around the pic set.
+;moar colortest
 	ld a, [DefaultFlypoint]
 	and a
 	jr nz, .asm_81acc
@@ -62428,9 +62466,9 @@ Function81adb: ; 81adb
 	ret
 ; 81baf
 
-String_81baf: db "レア", $6f, $6f, "@" ; rare (shiny)
-String_81bb4: db "ノーマル@" ; normal
-String_81bb9: db $7a, "きりかえ▶@" ; (A) switches
+String_81baf: db "shny", "@" ; rare (shiny)
+String_81bb4: db "nrml@" ; normal
+String_81bb9: db $7a, "Swtch@" ; (A) switches
 ; 81bc0
 
 Function81bc0: ; 81bc0
@@ -62796,6 +62834,7 @@ Function81dc7: ; 81dc7
 ; 81df4
 
 Function81df4: ; 81df4
+;page 3 of colortest?
 	hlcoord 10, 11
 	call Function81e5e
 	hlcoord 10, 12
@@ -62829,8 +62868,8 @@ Function81df4: ; 81df4
 	ret
 ; 81e46
 
-String_81e46: db "おぼえられる@" ; can be taught
-String_81e4d: db "おぼえられない@" ; cannot be taught
+String_81e46: db "Y.Learn@" ; can be taught
+String_81e4d: db "N.Learn@" ; cannot be taught
 ; 81e55
 
 Function81e55: ; 81e55
@@ -63104,17 +63143,18 @@ Function81f5e: ; 81f5e
 	ret
 ; 81fcd
 
+;"Are you finished" string from ColorTest page 2
 String_81fcd: ; 81fcd
-	db   "おわりますか?" ; Are you finished?
-	next "はい", $f2, $f2, $f2, $7a ; YES (A)
-	next "いいえ",    $f2, $f2, $7b ; NO  (B)
+	db   "Finish?" ; Are you finished?
+	next "Yes", $f2, $f2, $7a ; YES (A)
+	next "No",   $f2, $f2, $f2, $7b ; NO  (B)
 	db   "@"
 ; 81fe3
 
 DebugColorTestGFX:
 INCBIN "gfx/debug/color_test.2bpp"
 
-
+;HEY STUFF HERE WYATT
 TilesetColorTest:
 	ret
 	xor a

@@ -1008,10 +1008,12 @@ UnknownText_0x1c55d6: ; 0x1c55d6
 	done
 ; 0x1c55db
 
-UnknownText_0x1c55db: ; 0x1c55db
-	text "Password OK."
-	line "Select CONTINUE &"
-	cont "reset settings."
+UnknownText_0x1c55db: ; 0x1c55db ;wyatt changed again
+	text "Clock reset."
+	text "Have a nice day!"
+;	text "Password OK."
+;	line "Select CONTINUE &"
+;	cont "reset settings."
 	prompt
 ; 0x1c560b
 
