@@ -4799,10 +4799,10 @@ Function6219: ; 6219
 
 .data_626a
 	dw Function5ae8
-	dw Function6389 ;not sure why this is here but it relates to resetting save data and is apparently a word. -wyatt
-	dw Function620b
-	dw Function620b
-	dw Function6392 ; this actually makes the 'password ok', i think
+	dw Function6389 ; not sure why this is here but it relates to
+	dw Function620b ; resetting save data and is apparently a word.
+	dw Function620b ; -Wyatt
+	dw Function6392 ;
 ; 6274
 
 
@@ -4931,7 +4931,6 @@ TitleScreenTimer: ; 62f6
 
 TitleScreenMain: ; 6304
 
-
 ; Run the timer down.
 	ld hl, $cf65
 	ld e, [hl]
@@ -4940,13 +4939,10 @@ TitleScreenMain: ; 6304
 	ld a, e
 	or d
 	jr z, .end
-
 	dec de
 	ld [hl], d
 	dec hl
 	ld [hl], e
-
-
 
 ; Save data can be deleted by pressing Up + B + Select.
 	call GetJoypad
@@ -4959,41 +4955,35 @@ TitleScreenMain: ; 6304
 ; To bring up the clock reset dialog:
 
 ; Hold Down + B + Select to initiate the sequence.
+
 	ld a, [$ffeb]
-;removed the overly complex 'clock reset', replaced with the far simpler one from gold/silver
+
+; I removed the overly complex 'clock reset key' combo, replaced it with
+; the far simpler one from gold/silver
 
 	ld a, [hl]
 	and D_DOWN + B_BUTTON + SELECT
 	cp  D_DOWN + B_BUTTON + SELECT
-	jr z,.clock_reset ;(this just hitches onto the down-b-select checking thing that was already here. Nothing of value was lost by simplifying this.)
-;	jr nz, .check_start
+	jr z,.clock_reset
 
-
-;Wyatt - debug menu thing, I guess. Because debug.
+; Debug menu - color test
         call GetJoypad
         ld hl, hJoyDown
         ld a, [hl]
         and D_RIGHT + B_BUTTON + SELECT
         cp  D_RIGHT + B_BUTTON + SELECT
 	jr z, .gotocolortest
-
         call GetJoypad
         ld hl, hJoyDown
         ld a, [hl]
         and D_LEFT + B_BUTTON + SELECT
         cp  D_LEFT + B_BUTTON + SELECT
         jr z, .gotopokecolortest
-
 	jr nz, .check_start
 
-
-
-;farcall ColorTest ; yaaay color test
-;        jp Init ; go back to start, easiest way
         ld a, $34
         ld [$ffeb], a
-
-	jr .check_start
+	jr .check_start ; if we've not checked for start already, do it now.
 
 
 ; Press Start or A to start the game.
@@ -5075,7 +5065,7 @@ TitleScreenEnd: ; 6375
 	set 7, [hl]
 	ret
 ; 6389
-;wyatt
+
 Function6389: ; 6389
 	callba Function4d54c ;ask about save data clearing, and soft reset when done or cancelled
 	jp Init
@@ -49142,7 +49132,7 @@ Function4880e: ; 4880e (12:480e)
 	and D_LEFT
 	jr nz, .asm_4884f
 	ld a, [hl]
-	and D_RIGHT ;remember wyatt
+	and D_RIGHT
 	jr nz, .asm_4885f
 	call DelayFrame
 	and a
@@ -54707,26 +54697,26 @@ Function4d3b1: ; 4d3b1
         ld a, [$cfa9]
         cp $1
         ret z
-	;jp Init ;wyatt added
-        ;call Function4d41e ;causes infinite loop how I have it set up
+        ; call Function4d41e ;causes infinite loop how I have it modified, so commented out.
+	; it used to do the password reset prompt.
         jr c, .asm_4d3f7
         ld a, $0
         call GetSRAMBank
         ld a, $80
         ld [$ac60], a
         call CloseSRAM
-        ld hl, UnknownText_0x4d3fe ;password ok
+	;Tell the user that the password is reset
+        ld hl, UnknownText_0x4d3fe ; The clock has been reset. Have a nice day!
         call PrintText
         ret
 
 .asm_4d3f7
-	ld hl, UnknownText_0x4d403
+	ld hl, UnknownText_0x4d403 ; Wrong password! message box
 	call PrintText
 	ret
 ; 4d3fe
 
-UnknownText_0x4d3fe: ; 0x4d3fe
-	; Password OK. Select CONTINUE & reset settings.
+UnknownText_0x4d3fe: ; 0x4d3fe ; The clock has been reset. Have a nice day!
 	text_jump UnknownText_0x1c55db
 	db "@"
 ; 0x4d403
@@ -54759,35 +54749,18 @@ MenuData2_0x4d415: ; 0x4d415
 ; 0x4d41e
 
 Function4d41e: ; 4d41e ; enter password
-call Function4d3b1
-;jp Init
-ret
-;	call Function4d50f
-;	push de
-;	ld hl, StringBuffer2
-;	ld bc, $0005
-;	xor a
-;	call ByteFill
-;	ld a, $4
-;	ld [$d08b], a
-;	ld hl, UnknownText_0x4d463
-;	call PrintText
+; used to do the password entry. Now does ABSOLUTELY nothing
+; besides calling the function to reset the clock and a ret.
+
+	call Function4d3b1
+	ret
+
 .asm_4d437
-;	call Function4d468
 .asm_4d43a
-;	call Functiona57
-;	ld a, [$ffa9]
-;	ld b, a
-;	and $1
-;	jr nz, .asm_4d453
-;	jr .asm_4d453
-;	ld a, b
-;	and $f0
-;	jr z, .asm_4d43a
-;	call Function4d490
-;	ld c, $3
-;	call DelayFrames
-;	jr .asm_4d437
+
+; #### todo: maybe I can remove the below and free some space.
+; no idea what this does... so I'm leaving it for now since it
+; doesn't seem to harm much.
 
 .asm_4d453
 	call Function4d4e0
@@ -54812,7 +54785,7 @@ UnknownText_0x4d463: ; 0x4d463
 	db "@"
 ; 0x4d468
 
-Function4d468: ; 4d468 ;clock reset?
+Function4d468: ; 4d468
 	hlcoord 14, 15
 	ld de, StringBuffer2
 	ld c, $5
@@ -54995,12 +54968,12 @@ Function4d54c: ; 4d54c ;clear title screen, set the 'menu' music, and prompt for
 	ret
 ; 4d580
 
-UnknownText_0x4d580: ; 0x4d580 ;clear save data prompt, I think
+UnknownText_0x4d580: ; 0x4d580 ;'clear all save data?'
 	; Clear all save data?
-	text_jump UnknownText_0x1c564a ;bookmark1
+	text_jump UnknownText_0x1c564a
 	db "@"
 ; 0x4d585
-;wyatt
+
 MenuDataHeader_0x4d585: ; 0x4d585 ;Prompt for save data clear (y/n), set default option to 'no'
 	db $00 ; flags
 	db 07, 14 ; start coords
@@ -60511,22 +60484,11 @@ GetBackpic: ; 5116c
 ; 511c5
 
 FixPicBank: ; 511c5
-; This is a thing for some reason.
-;       push hl
-;       push bc
-;       sub PICS_1 - $36
+; This is a thing for some reason. hack fixes it. It limited the banks
+; that sprites were allowed to come from. Now it doesn't!
+; (thanks sanqui and padz and iimarckus and anyone else I forgot)
         add $36
         ret
-;WYATT COMMENT OUT
-;       ld c, a
-;       ld b, 0
-;       ld hl, Unknown_511d4
-;       add hl, bc
-;       ld a, [hl]
-;       pop bc
-;       pop hl
-;       ret
-;END OF WYATT COMMENT OUT
 ; 511d4
 
 Unknown_511d4: ; 511d4
@@ -62016,10 +61978,14 @@ Function80728: ; 80728
 BattleText::
 INCLUDE "text/battle.asm"
 
-PokeColorTest: ;Wyatt added as a hackish solution
+PokeColorTest:
+;This makes it look at pokemon sprites instead of trainer sprites.
+;(IIRC I made this left-select-b on title screen)
 	ld a, 0
 	ld [DefaultFlypoint], a
 ColorTest: ; 818ac
+;Unless you get to this from PokeColorTest above,
+;this should show trainer sprites. (right-select-b on title screen)
 
 ; A debug menu to test monster and trainer palettes at runtime.
 
@@ -63154,7 +63120,6 @@ String_81fcd: ; 81fcd
 DebugColorTestGFX:
 INCBIN "gfx/debug/color_test.2bpp"
 
-;HEY STUFF HERE WYATT
 TilesetColorTest:
 	ret
 	xor a

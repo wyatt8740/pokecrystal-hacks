@@ -1008,9 +1008,10 @@ UnknownText_0x1c55d6: ; 0x1c55d6
 	done
 ; 0x1c55db
 
-UnknownText_0x1c55db: ; 0x1c55db ;wyatt changed again
-	text "Clock reset."
-	text "Have a nice day!"
+UnknownText_0x1c55db: ; 0x1c55db ;clock reset successfully
+	text "The clock has"
+	line "been reset."
+	cont "Have a nice day!"
 ;	text "Password OK."
 ;	line "Select CONTINUE &"
 ;	cont "reset settings."
